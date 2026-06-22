@@ -1,0 +1,2760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="MedSimplify AI - Intelligent Medical Report Simplifier and Patient Education Assistant.">
+  <title>MedSimplify AI - Intelligent Medical Report Simplifier</title>
+  
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩺</text></svg>" />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Tesseract.js OCR CDN -->
+  <script src="https://unpkg.com/tesseract.js@v5.1.0/dist/tesseract.min.js"></script>
+
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+
+  <style>
+    /* Design System: MedSimplify AI (Vanilla CSS with Premium Dark Aesthetics) */
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #131c31;
+      --bg-glass: rgba(20, 30, 54, 0.65);
+      --border-glass: rgba(255, 255, 255, 0.08);
+      
+      --primary: #6366f1; /* Indigo */
+      --primary-hover: #4f46e5;
+      --primary-glow: rgba(99, 102, 241, 0.15);
+      
+      --emerald: #10b981; /* Success Green */
+      --emerald-glow: rgba(16, 185, 129, 0.1);
+      
+      --amber: #f59e0b; /* Warning Yellow */
+      --amber-glow: rgba(245, 158, 11, 0.1);
+      
+      --crimson: #ef4444; /* Alert Red */
+      --crimson-glow: rgba(239, 68, 68, 0.15);
+
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      
+      --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+      --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 40%);
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-secondary);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary);
+    }
+
+    h1, h2, h3, h4 {
+      font-family: var(--font-display);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    @keyframes pulseGlow {
+      0% { transform: scale(0.95); opacity: 0.5; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+      100% { transform: scale(0.95); opacity: 0.5; }
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .glass-panel {
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-premium);
+      transition: var(--transition-smooth);
+    }
+    .glass-panel:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .app-header {
+      border-bottom: 1px solid var(--border-glass);
+      padding: 1.25rem 2rem;
+      background: rgba(11, 15, 25, 0.8);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      background: linear-gradient(135deg, var(--primary), var(--emerald));
+      padding: 0.5rem;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(to right, #ffffff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .persistent-disclaimer {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px dashed rgba(245, 158, 11, 0.3);
+      padding: 0.6rem 1.2rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      color: var(--amber);
+      max-width: 600px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .emergency-banner {
+      background: rgba(239, 68, 68, 0.15);
+      border: 2px solid var(--crimson);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      display: none; /* Dynamic show */
+      align-items: flex-start;
+      gap: 1.2rem;
+      animation: slideDown 0.4s ease-out;
+      box-shadow: 0 0 25px rgba(239, 68, 68, 0.2);
+    }
+
+    .emergency-icon {
+      background: var(--crimson);
+      padding: 0.6rem;
+      border-radius: 50%;
+      animation: pulseGlow 1.8s infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .emergency-content h3 {
+      color: #ff8a8a;
+      margin-bottom: 0.4rem;
+      font-size: 1.2rem;
+    }
+
+    .emergency-actions {
+      margin-top: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .btn-emergency {
+      background: var(--crimson);
+      color: white;
+      border: none;
+      font-weight: 600;
+      padding: 0.6rem 1.2rem;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .btn-emergency:hover {
+      background: #dc2626;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-emergency-secondary {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: white;
+    }
+    .btn-emergency-secondary:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .grid-main {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 968px) {
+      .grid-main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .upload-panel {
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      height: fit-content;
+    }
+
+    .panel-title {
+      font-size: 1.25rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .upload-area {
+      border: 2px dashed rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: var(--radius-md);
+      padding: 3rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .upload-area:hover, .upload-area.drag-active {
+      border-color: var(--primary);
+      background: var(--primary-glow);
+    }
+
+    .upload-icon {
+      color: var(--text-secondary);
+      transition: var(--transition-smooth);
+    }
+    .upload-area:hover .upload-icon {
+      color: var(--primary);
+      transform: translateY(-4px);
+    }
+
+    .upload-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      font-family: var(--font-display);
+      font-weight: 500;
+      padding: 0.6rem 1.4rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-block;
+      transition: var(--transition-smooth);
+      text-align: center;
+    }
+    .upload-btn:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+
+    .ocr-progress-container {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 99px;
+      overflow: hidden;
+      height: 8px;
+      margin-top: 1rem;
+      display: none;
+    }
+
+    .ocr-progress-bar {
+      background: linear-gradient(to right, var(--primary), var(--emerald));
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    .settings-panel {
+      display: none; /* Collapsible */
+      background: var(--bg-glass);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      animation: slideDown 0.3s;
+    }
+
+    .input-field {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-glass);
+      color: var(--text-primary);
+      padding: 0.6rem 0.8rem;
+      border-radius: var(--radius-sm);
+      font-family: monospace;
+      font-size: 0.85rem;
+      width: 100%;
+    }
+    .input-field:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    .provider-select {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-glass);
+      color: var(--text-primary);
+      padding: 0.5rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .toggle-privacy-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      padding: 0.5rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.85rem;
+      width: fit-content;
+    }
+
+    .text-input-area {
+      width: 100%;
+      min-height: 140px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      resize: vertical;
+    }
+
+    .results-container {
+      display: none; /* Shows on analysis */
+      flex-direction: column;
+      gap: 2rem;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .dashboard-panel {
+      padding: 2rem;
+      min-height: 400px;
+    }
+
+    .panel-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 99px;
+    }
+    .badge-indigo { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
+    .badge-emerald { background: rgba(16, 185, 129, 0.15); color: var(--emerald); }
+    .badge-amber { background: rgba(245, 158, 11, 0.15); color: var(--amber); }
+
+    .lab-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+
+    .lab-card {
+      padding: 1.25rem;
+      border-radius: var(--radius-md);
+      border-left: 4px solid var(--text-muted);
+      background: rgba(255, 255, 255, 0.02);
+      transition: var(--transition-smooth);
+    }
+    .lab-card:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .lab-card.normal { border-left-color: var(--emerald); background: var(--emerald-glow); }
+    .lab-card.low { border-left-color: var(--amber); background: var(--amber-glow); }
+    .lab-card.high { border-left-color: var(--crimson); background: var(--crimson-glow); }
+
+    .lab-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .lab-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.5rem;
+    }
+
+    .lab-val {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: var(--font-display);
+    }
+
+    .lab-status {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.15rem 0.4rem;
+      border-radius: var(--radius-sm);
+    }
+    .lab-card.normal .lab-status { background: rgba(16, 185, 129, 0.2); color: var(--emerald); }
+    .lab-card.low .lab-status { background: rgba(245, 158, 11, 0.2); color: var(--amber); }
+    .lab-card.high .lab-status { background: rgba(239, 68, 68, 0.2); color: var(--crimson); }
+
+    .lab-range {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .lab-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-top: 0.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 0.5rem;
+    }
+
+    .lab-group {
+      margin-top: 1.5rem;
+    }
+    .lab-group:first-of-type {
+      margin-top: 1rem;
+    }
+    .lab-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0.85rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.75rem;
+      border-left: 4px solid var(--text-muted);
+    }
+    .lab-group-header h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0 !important;
+    }
+    .lab-group-count {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-secondary);
+    }
+    .lab-group-header-high {
+      border-left-color: var(--crimson);
+      background: var(--crimson-glow);
+    }
+    .lab-group-header-high h4 {
+      color: #fecaca;
+    }
+    .lab-group-header-low {
+      border-left-color: var(--amber);
+      background: var(--amber-glow);
+    }
+    .lab-group-header-low h4 {
+      color: #fde68a;
+    }
+    .lab-group-header-normal {
+      border-left-color: var(--emerald);
+      background: var(--emerald-glow);
+    }
+    .lab-group-header-normal h4 {
+      color: #a7f3d0;
+    }
+
+    .summary-text {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: #e2e8f0;
+      margin-top: 1rem;
+    }
+
+    .clickable-term {
+      color: var(--primary);
+      border-bottom: 1px dashed var(--primary);
+      cursor: pointer;
+      font-weight: 500;
+      padding: 0 2px;
+      border-radius: 2px;
+      transition: var(--transition-smooth);
+    }
+    .clickable-term:hover {
+      background: var(--primary-glow);
+      color: white;
+    }
+
+    .glossary-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .glossary-item {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-glass);
+    }
+
+    .glossary-term {
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .glossary-def {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .glossary-analogy {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      margin-top: 0.5rem;
+      background: rgba(99, 102, 241, 0.05);
+      padding: 0.5rem;
+      border-left: 2px solid var(--primary);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+
+    .glossary-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      display: none; /* Dynamic show */
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .glossary-modal {
+      width: 90%;
+      max-width: 450px;
+      padding: 2rem;
+      animation: slideDown 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-close-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: none;
+      color: var(--text-secondary);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+    }
+
+    .question-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-glass);
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: var(--transition-smooth);
+    }
+    .question-item:hover {
+      border-color: rgba(99, 102, 241, 0.3);
+      background: rgba(99, 102, 241, 0.02);
+    }
+
+    .question-checkbox {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .btn-print {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-glass);
+      color: var(--text-primary);
+      font-family: var(--font-display);
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: var(--transition-smooth);
+    }
+    .btn-print:hover {
+      background: var(--border-glass);
+      border-color: var(--text-secondary);
+    }
+
+    .lifestyle-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+    }
+
+    .lifestyle-item {
+      background: var(--emerald-glow);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .lifestyle-item-text {
+      font-size: 0.92rem;
+      line-height: 1.4;
+      color: #e2e8f0;
+    }
+
+    .references-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .reference-link {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-glass);
+      color: var(--text-primary);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 99px;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: var(--transition-smooth);
+    }
+    .reference-link:hover {
+      background: var(--primary-glow);
+      border-color: var(--primary);
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    .map-container {
+      height: 380px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--border-glass);
+      margin-top: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hospital-popup {
+      color: #0f172a;
+      font-family: var(--font-body);
+    }
+    .hospital-popup h4 {
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .hospital-popup p {
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+    }
+    .hospital-popup a {
+      color: var(--primary);
+      text-decoration: underline;
+      font-weight: 600;
+    }
+
+    .camera-modal {
+      width: 90%;
+      max-width: 500px;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .camera-preview-box {
+      background: #000;
+      border-radius: var(--radius-sm);
+      height: 240px;
+      margin: 1.5rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-glass);
+      overflow: hidden;
+    }
+
+    .camera-shutter-btn {
+      background: white;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 4px solid var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .camera-shutter-btn:hover {
+      background: #f1f5f9;
+      transform: scale(1.05);
+    }
+
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .welcome-box {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      min-height: 400px;
+      color: var(--text-secondary);
+      text-align: center;
+      gap: 1.25rem;
+    }
+
+    .loading-box {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      min-height: 400px;
+      text-align: center;
+      gap: 1.25rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-display);
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: var(--transition-smooth);
+    }
+    .tab-btn.active {
+      border-color: var(--primary);
+      color: white;
+      background: rgba(99, 102, 241, 0.08);
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    }
+
+    .tab-content-panel {
+      display: none;
+    }
+    .tab-content-panel.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #root, .app-header, .upload-panel, .emergency-banner, .map-container, .btn-print, .settings-panel, .references-list, .lifestyle-list, .lab-grid, .tab-btn {
+        display: none !important;
+      }
+      .print-area, .print-area * {
+        visibility: visible;
+      }
+      .print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        color: black !important;
+        background: white !important;
+        padding: 2rem;
+      }
+      .print-area h2, .print-area h3, .print-area p, .print-area div {
+        color: black !important;
+      }
+      .question-item {
+        border-bottom: 1px solid #ccc !important;
+        background: none !important;
+        padding: 0.75rem 0 !important;
+        margin-bottom: 0 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-icon">
+        <i data-lucide="heart-pulse" style="stroke: white; width: 24px; height: 24px;"></i>
+      </div>
+      <div>
+        <h1 class="brand-title">MedSimplify AI</h1>
+        <span style="font-size: 0.75rem; color: var(--text-secondary);">Intelligent Patient Education Assistant</span>
+      </div>
+    </div>
+
+    <!-- Feature 1: Persistent Medical Disclaimer -->
+    <div class="persistent-disclaimer">
+      <i data-lucide="shield-check" style="stroke: var(--amber); width: 20px; height: 20px; flex-shrink: 0;"></i>
+      <span>
+        <strong>Disclaimer:</strong> This tool provides educational information only and is not a substitute for professional medical advice, diagnosis, or treatment.
+      </span>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <button id="privacy-toggle-btn" class="toggle-privacy-btn">
+        <i data-lucide="shield" style="width: 16px; height: 16px;"></i>
+        <span id="privacy-btn-text">Privacy Mode On</span>
+      </button>
+      
+      <button class="btn-print" style="margin: 0; padding: 0.5rem;" onclick="toggleSettingsPanel()">
+        <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+    
+    <!-- Collapsible Settings Panel -->
+    <div id="settings-config-panel" class="settings-panel">
+      <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <i data-lucide="settings" style="width: 18px; height: 18px;"></i> API Key Configuration
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem;">
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <label style="font-size: 0.85rem; color: var(--text-secondary);">AI Service Provider</label>
+          <select id="api-provider-select" class="provider-select" onchange="updateProviderSelection()">
+            <option value="local">None (Use Advanced Local Rule Engine)</option>
+            <option value="gemini">Google Gemini 1.5 Flash (Recommended)</option>
+            <option value="openai">OpenAI GPT-4o-Mini</option>
+          </select>
+        </div>
+
+        <div id="key-input-container" style="display: none; flex-direction: column; gap: 0.5rem;">
+          <label id="key-label" style="font-size: 0.85rem; color: var(--text-secondary);">Custom API Key</label>
+          <input type="password" id="api-key-input" class="input-field" placeholder="Enter API Key" oninput="saveConfiguration()">
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.5rem; justify-content: center;">
+          <span style="font-size: 0.8rem; color: var(--text-muted);">
+            ✓ Saved securely in your browser's local storage and never sent anywhere else.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 2: Red-Flag Emergency Banner -->
+    <div id="emergency-alert-banner" class="emergency-banner">
+      <div class="emergency-icon">
+        <i data-lucide="alert-triangle" style="stroke: white; width: 24px; height: 24px;"></i>
+      </div>
+      <div class="emergency-content" style="flex-grow: 1;">
+        <h3>⚠️ CRITICAL RED-FLAG ALERT DETECTED</h3>
+        <p id="emergency-explanation-text" style="color: #fed7d7; font-size: 0.95rem; line-height: 1.5; margin-top: 0.25rem;"></p>
+        
+        <div class="emergency-actions">
+          <a href="tel:112" class="btn-emergency">
+            <i data-lucide="phone-call" style="width: 16px; height: 16px;"></i> Dial National Emergency (112)
+          </a>
+          <a href="tel:108" class="btn-emergency btn-emergency-secondary">
+            <i data-lucide="phone-call" style="width: 16px; height: 16px;"></i> Call Ambulance (108)
+          </a>
+          <button class="btn-emergency btn-emergency-secondary" onclick="locateEmergencyFacilities()">
+            <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i> <span id="locate-btn-label">Find Nearby Emergency Rooms</span>
+          </button>
+        </div>
+
+        <p id="location-error-display" style="color: var(--amber); font-size: 0.85rem; margin-top: 0.75rem; display: none;"></p>
+
+        <!-- Leaflet Map Container inside emergency banner -->
+        <div id="map-section-container" style="display: none; margin-top: 1.5rem;">
+          <h4 style="color: white; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i> Closest Medical Facilities (Leaflet Live OSM)
+          </h4>
+          <div class="map-container">
+            <div id="leaflet-map-element" style="width: 100%; height: 100%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid-main">
+      
+      <!-- Left Column: Upload panel -->
+      <div class="glass-panel upload-panel">
+        <h2 class="panel-title">
+          <i data-lucide="file-text" style="stroke: #818cf8; width: 20px; height: 20px;"></i> Input Medical Report
+        </h2>
+
+        <!-- Upload Drag zone -->
+        <div id="drop-zone" class="upload-area" onclick="triggerFileInput()">
+          <i data-lucide="upload" class="upload-icon" style="width: 42px; height: 42px;"></i>
+          <div>
+            <p style="font-weight: 600;">Drag & drop your medical report here</p>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">Supports PDF, images, text, OCR, or JSON files</p>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem;" onclick="event.stopPropagation()">
+            <label class="upload-btn" style="border-radius: var(--radius-sm);">
+              Browse Files
+              <input type="file" id="file-input" style="display: none;" accept="image/*,application/pdf,text/*,.txt,.ocr,.json,.rtf,.log" onchange="handleFileSelect(event)">
+            </label>
+            <button class="upload-btn" style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: var(--radius-sm);" onclick="openCameraSimulation()">
+              <i data-lucide="camera" style="width: 16px; height: 16px; margin-right: 0.4rem; vertical-align: middle;"></i> Camera
+            </button>
+          </div>
+        </div>
+
+        <!-- OCR progress indicator -->
+        <div id="ocr-progress-indicator" class="ocr-progress-container">
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem;">
+            <span>Extracting report text (OCR)...</span>
+            <span id="ocr-percentage-text">0%</span>
+          </div>
+          <div class="ocr-progress-container" style="display: block;">
+            <div id="ocr-progress-bar-fill" class="ocr-progress-bar"></div>
+          </div>
+        </div>
+
+        <!-- Manual text area -->
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <label style="font-size: 0.85rem; font-weight: 600;">Extracted Text Content</label>
+          <textarea id="report-text-input" class="text-input-area" placeholder="Extracted OCR text will appear here. You can also paste or edit the text manually..."></textarea>
+        </div>
+
+        <!-- Preloaded sample buttons -->
+        <div>
+          <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Or try one of our sample reports:</span>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <button class="reference-link" style="text-align: left; display: flex; justify-content: space-between; width: 100%; border-radius: var(--radius-sm);" onclick="loadSampleReport(0)">
+              <span>Standard Blood Test (Anemia)</span>
+              <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+            </button>
+            <button class="reference-link" style="text-align: left; display: flex; justify-content: space-between; width: 100%; border-radius: var(--radius-sm);" onclick="loadSampleReport(1)">
+              <span>Cardiovascular Lipid Profile (High LDL)</span>
+              <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+            </button>
+            <button class="reference-link" style="text-align: left; display: flex; justify-content: space-between; width: 100%; border-radius: var(--radius-sm);" onclick="loadSampleReport(2)">
+              <span>CRITICAL: Cardiac Troponin (Emergency Demo)</span>
+              <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Analyze and clear buttons -->
+        <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+          <button id="btn-analyze-report" class="upload-btn" style="flex-grow: 1; padding: 0.8rem; font-weight: 700; border-radius: var(--radius-sm);" onclick="triggerInterpretation()">
+            <span><i data-lucide="sparkles" style="width: 16px; height: 16px; margin-right: 0.5rem; display: inline-block; vertical-align: middle;"></i> Simplify & Interpret Report</span>
+          </button>
+          <button id="btn-clear-session" class="upload-btn" style="background: rgba(239, 68, 68, 0.1); color: var(--crimson); border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.8rem; border-radius: var(--radius-sm); display: none;" onclick="clearActiveSession()">
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Column: Dashboard results -->
+      <div class="glass-panel dashboard-panel">
+        
+        <!-- Welcome Screen -->
+        <div id="welcome-dashboard-state" class="welcome-box">
+          <i data-lucide="heart-pulse" style="stroke: var(--text-muted); width: 64px; height: 64px;"></i>
+          <div>
+            <h3 style="color: white; margin-bottom: 0.5rem;">No Analysis Available</h3>
+            <p style="max-width: 400px; font-size: 0.9rem;">
+              Upload an image or document, extract its text, and tap "Simplify & Interpret Report" to receive a patient-friendly summary, glossary, value highlights, and doctor questions.
+            </p>
+          </div>
+        </div>
+
+        <!-- Loading Screen -->
+        <div id="loading-dashboard-state" class="loading-box">
+          <i data-lucide="refresh-cw" class="animate-spin" style="stroke: #818cf8; width: 48px; height: 48px;"></i>
+          <div>
+            <h3 style="color: white; margin-bottom: 0.5rem;">Analyzing Clinical Content</h3>
+            <p style="max-width: 400px; font-size: 0.9rem; color: var(--text-secondary);">
+              Simplifying complex medical jargon, checking normal/high/low lab values, detecting emergencies, and compiling custom recommendations...
+            </p>
+          </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="results-dashboard-state" class="results-container">
+          
+          <!-- Warning banner if API fails -->
+          <div id="api-warning-bar" style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--amber); color: var(--amber); border-radius: var(--radius-sm); padding: 0.8rem; font-size: 0.85rem; display: none;"></div>
+
+          <!-- Tabs Navigation -->
+          <div style="display: flex; border-bottom: 1px solid var(--border-glass); overflow-x: auto; gap: 0.5rem; padding-bottom: 0.1rem;">
+            <button id="tab-btn-summary" class="tab-btn active" onclick="switchDashboardTab('summary')">
+              <i data-lucide="book-open" style="width: 16px; height: 16px;"></i> Summary & Glossary
+            </button>
+            <button id="tab-btn-values" class="tab-btn" onclick="switchDashboardTab('values')">
+              <i data-lucide="heart-pulse" style="width: 16px; height: 16px;"></i> Lab Highlights
+            </button>
+            <button id="tab-btn-questions" class="tab-btn" onclick="switchDashboardTab('questions')">
+              <i data-lucide="printer" style="width: 16px; height: 16px;"></i> Doctor Questionnaire
+            </button>
+            <button id="tab-btn-lifestyle" class="tab-btn" onclick="switchDashboardTab('lifestyle')">
+              <i data-lucide="award" style="width: 16px; height: 16px;"></i> Wellness Advice
+            </button>
+          </div>
+
+          <!-- TAB CONTENT: Summary -->
+          <div id="tab-panel-summary" class="tab-content-panel active">
+            <span class="panel-header-badge badge-indigo">Educational Translation</span>
+            
+            <!-- Explanation Summary text area -->
+            <div class="summary-text">
+              <p id="simplified-summary-paragraph"></p>
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; align-items: center; gap: 0.4rem; color: var(--text-muted); font-size: 0.8rem;">
+              <i data-lucide="help-circle" style="width: 14px; height: 14px;"></i>
+              <span>Tip: Click on highlighted medical terms in the summary to view definitions & analogies immediately.</span>
+            </div>
+
+            <!-- Glossary section -->
+            <div style="margin-top: 2.5rem;">
+              <h3 style="display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem; font-size: 1.1rem;">
+                <i data-lucide="book-open" style="stroke: #818cf8; width: 18px; height: 18px;"></i> Medical Term Glossary
+              </h3>
+              <div id="glossary-items-list" class="glossary-list"></div>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT: Values Highlights -->
+          <div id="tab-panel-values" class="tab-content-panel">
+            <span class="panel-header-badge badge-emerald">Laboratory Breakdown</span>
+            <div id="lab-cards-grid"></div>
+          </div>
+
+          <!-- TAB CONTENT: Doctor Questionnaire (Print section) -->
+          <div id="tab-panel-questions" class="tab-content-panel print-area">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem;">
+              <div>
+                <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;">
+                  <i data-lucide="printer" style="stroke: #818cf8; width: 18px; height: 18px;"></i> Prepare For Your Doctor
+                </h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                  Tick the questions you want to discuss, and click "Print Checklist" below.
+                </p>
+              </div>
+              <button class="btn-print" onclick="window.print()">
+                <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Print Checklist
+              </button>
+            </div>
+            <div id="doctor-questions-container" style="margin-top: 1.5rem;"></div>
+          </div>
+
+          <!-- TAB CONTENT: Wellness & References -->
+          <div id="tab-panel-lifestyle" class="tab-content-panel">
+            <div>
+              <h3 style="display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem; font-size: 1.1rem;">
+                <i data-lucide="award" style="stroke: #10b981; width: 18px; height: 18px;"></i> Wellness Recommendations
+              </h3>
+              <div id="wellness-recommendations-list" class="lifestyle-list"></div>
+            </div>
+
+            <div style="margin-top: 2.5rem;">
+              <h3 style="display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem; font-size: 1.1rem;">
+                <i data-lucide="external-link" style="stroke: #818cf8; width: 18px; height: 18px;"></i> Trusted Medical References
+              </h3>
+              <div id="references-links-container" class="references-list"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clickable Glossary Popover Modal -->
+  <div id="glossary-modal-overlay" class="glossary-modal-overlay" onclick="closeGlossaryModal()">
+    <div class="glass-panel glossary-modal" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <span class="panel-header-badge badge-indigo">Medical Term Explained</span>
+        <button class="modal-close-btn" onclick="closeGlossaryModal()">×</button>
+      </div>
+      <h3 id="modal-term-title" style="color: var(--primary); font-size: 1.3rem; margin-bottom: 0.75rem;"></h3>
+      <p id="modal-term-definition" style="font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.25rem; color: #f1f5f9;"></p>
+      
+      <div id="modal-term-analogy-box" class="glossary-analogy" style="background: rgba(99, 102, 241, 0.08); border-left-width: 4px; padding: 1rem;">
+        <h4 style="font-size: 0.85rem; color: white; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem;">
+          <span>💡 Easy Analogy</span>
+        </h4>
+        <p id="modal-term-analogy-text" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Camera Scan Simulation Modal -->
+  <div id="camera-simulation-modal" class="glossary-modal-overlay">
+    <div class="glass-panel camera-modal">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="font-size: 1.1rem;">Scan Medical Report</h3>
+        <button class="modal-close-btn" onclick="closeCameraSimulation()">×</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">Position the document inside the scanner frame.</p>
+      <div class="camera-preview-box">
+        <div style="text-align: center; padding: 2rem;">
+          <i data-lucide="camera" style="stroke: var(--text-muted); width: 42px; height: 42px; margin-bottom: 0.5rem;"></i>
+          <p>Simulation Mode: Camera hardware bypassed.</p>
+          <p style="font-size: 0.75rem; margin-top: 0.25rem;">Click shutter below to capture simulated blood test report.</p>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: center;">
+        <button class="camera-shutter-btn" onclick="captureSimulatedSnapshot()"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vanilla JavaScript Logic -->
+  <script>
+    // Global State
+    let activeResult = null;
+    let mapInstance = null;
+    let markersLayerGroup = null;
+    let privacyMode = true;
+    let apiProvider = 'local';
+    let apiKey = '';
+
+    const SAMPLE_REPORTS = [
+      {
+        name: "Standard Blood Test (Anemia)",
+        text: "Patient Name: Jane Doe\nDate: June 15, 2026\nTests conducted:\nHemoglobin: 10.2 g/dL (Reference Range: 12.0 - 15.5 g/dL)\nWhite Blood Cells: 6.4 x10^3/uL (Reference: 4.5 - 11.0)\nNotes: Patient reports mild fatigue."
+      },
+      {
+        name: "Cardiovascular Lipid Profile (High Cholesterol)",
+        text: "Patient: John Smith\nDate: May 12, 2026\nLipid Panel Findings:\nTotal Cholesterol: 240 mg/dL\nLDL Cholesterol: 180 mg/dL (Reference Range: < 100 mg/dL)\nHDL Cholesterol: 42 mg/dL (Reference Range: > 40 mg/dL)\nTriglycerides: 160 mg/dL\nLifestyle adjustments suggested."
+      },
+      {
+        name: "CRITICAL: Cardiac Troponin Test (Emergency Simulation)",
+        text: "Emergency Department Triage Report\nTime of arrival: 21:30\nSymptoms: Severe squeezing chest pressure radiating to left arm. Profuse sweating.\nCardiac Biomarkers:\nTroponin I: 5.4 ng/mL (Reference Range: < 0.04 ng/mL - CRITICAL ALERT)\nRecommendation: Immediate cardiology consult. Prepare for urgent cardiac catheterization lab intervention."
+      }
+    ];
+
+    // Initialize application settings on load
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedKey = localStorage.getItem('medsimplify_api_key');
+      const savedProvider = localStorage.getItem('medsimplify_provider');
+      const savedPrivacy = localStorage.getItem('medsimplify_privacy');
+      
+      if (savedKey) apiKey = savedKey;
+      if (savedProvider) apiProvider = savedProvider;
+      if (savedPrivacy !== null) privacyMode = savedPrivacy === 'true';
+
+      // Set input element values
+      document.getElementById('api-provider-select').value = apiProvider;
+      document.getElementById('api-key-input').value = apiKey;
+      updateProviderSelection();
+      updatePrivacyBadge();
+
+      // Drag & Drop
+      const dropZone = document.getElementById('drop-zone');
+      dropZone.addEventListener('dragenter', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); });
+      dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); });
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-active'));
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-active');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          processOCRFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      // Init Lucide
+      if (window.lucide) window.lucide.createIcons();
+    });
+
+    // Toggle Privacy badge state
+    document.getElementById('privacy-toggle-btn').addEventListener('click', () => {
+      privacyMode = !privacyMode;
+      saveConfiguration();
+      updatePrivacyBadge();
+    });
+
+    function updatePrivacyBadge() {
+      const btn = document.getElementById('privacy-toggle-btn');
+      const text = document.getElementById('privacy-btn-text');
+      if (privacyMode) {
+        btn.style.background = 'rgba(16, 185, 129, 0.1)';
+        btn.style.borderColor = 'var(--emerald)';
+        btn.style.color = 'var(--emerald)';
+        text.innerText = "Privacy Mode On";
+      } else {
+        btn.style.background = 'rgba(99, 102, 241, 0.1)';
+        btn.style.borderColor = 'var(--primary)';
+        btn.style.color = 'var(--primary)';
+        text.innerText = "Local Mode Only";
+      }
+    }
+
+    function toggleSettingsPanel() {
+      const panel = document.getElementById('settings-config-panel');
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function updateProviderSelection() {
+      apiProvider = document.getElementById('api-provider-select').value;
+      const keyContainer = document.getElementById('key-input-container');
+      const keyLabel = document.getElementById('key-label');
+      
+      if (apiProvider === 'local') {
+        keyContainer.style.display = 'none';
+      } else {
+        keyContainer.style.display = 'flex';
+        keyLabel.innerText = apiProvider === 'gemini' ? 'Gemini API Key' : 'OpenAI API Key';
+      }
+      saveConfiguration();
+    }
+
+    function saveConfiguration() {
+      apiKey = document.getElementById('api-key-input').value;
+      if (privacyMode) {
+        localStorage.setItem('medsimplify_api_key', apiKey);
+        localStorage.setItem('medsimplify_provider', apiProvider);
+        localStorage.setItem('medsimplify_privacy', 'true');
+      } else {
+        localStorage.removeItem('medsimplify_api_key');
+        localStorage.removeItem('medsimplify_provider');
+        localStorage.setItem('medsimplify_privacy', 'false');
+      }
+    }
+
+    // Trigger local browse file select click
+    function triggerFileInput() {
+      document.getElementById('file-input').click();
+    }
+
+    function handleFileSelect(e) {
+      if (e.target.files && e.target.files[0]) {
+        processOCRFile(e.target.files[0]);
+      }
+    }
+
+    function isTextSufficient(text) {
+      return (text || '').trim().length >= 50;
+    }
+
+    async function extractPdfTextOrOcr(fileObj, onProgress) {
+      const arrayBuffer = await fileObj.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let extractedText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        extractedText += content.items.map(item => item.str).join(' ') + '\n';
+      }
+      
+      if (isTextSufficient(extractedText)) {
+        return { text: extractedText, source: 'pdf' };
+      }
+      
+      let ocrText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        
+        await page.render({
+          canvasContext: context,
+          viewport: viewport
+        }).promise;
+        
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        
+        const pageText = await Tesseract.recognize(
+          dataUrl,
+          'eng',
+          {
+            logger: m => {
+              if (m.status === 'recognizing') {
+                const pageProgress = m.progress;
+                const overallProgress = Math.round(((i - 1) / pdf.numPages + pageProgress / pdf.numPages) * 100);
+                onProgress(overallProgress);
+              }
+            }
+          }
+        ).then(({ data: { text } }) => text);
+        
+        ocrText += `--- Page ${i} ---\n` + pageText + '\n';
+      }
+      
+      return { text: ocrText, source: 'ocr' };
+    }
+
+    // Client-side OCR and text/json file reader
+    async function processOCRFile(file) {
+      const progressContainer = document.getElementById('ocr-progress-indicator');
+      const progressFill = document.getElementById('ocr-progress-bar-fill');
+      const percentageText = document.getElementById('ocr-percentage-text');
+      
+      progressContainer.style.display = 'block';
+      progressFill.style.width = '0%';
+      percentageText.innerText = '0%';
+
+      const isTextFile = file.type === 'text/plain' || 
+                         file.type === 'application/json' ||
+                         file.name.toLowerCase().endsWith('.txt') ||
+                         file.name.toLowerCase().endsWith('.ocr') ||
+                         file.name.toLowerCase().endsWith('.json') ||
+                         file.name.toLowerCase().endsWith('.rtf') ||
+                         file.name.toLowerCase().endsWith('.log');
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+      if (isTextFile) {
+        try {
+          const text = await file.text();
+          let finalVal = text;
+          if (file.name.toLowerCase().endsWith('.json') || file.type === 'application/json') {
+            try {
+              const parsed = JSON.parse(text);
+              const possibleTextFields = ['text', 'content', 'ocrText', 'extractedText', 'rawText', 'reportText', 'ocr_text', 'data'];
+              for (const field of possibleTextFields) {
+                if (parsed && typeof parsed[field] === 'string' && parsed[field].trim().length > 0) {
+                  finalVal = parsed[field];
+                  break;
+                }
+              }
+            } catch (jsonErr) {}
+          }
+          triggerInterpretation(finalVal);
+        } catch (err) {
+          console.error(err);
+          alert("Failed to read text file.");
+        } finally {
+          progressContainer.style.display = 'none';
+        }
+        return;
+      }
+
+      if (isPdf) {
+        try {
+          const { text } = await extractPdfTextOrOcr(file, (pct) => {
+            progressFill.style.width = pct + '%';
+            percentageText.innerText = pct + '%';
+          });
+          triggerInterpretation(text);
+        } catch (err) {
+          console.error("PDF processing failed:", err);
+          alert("Could not process PDF document.");
+        } finally {
+          progressContainer.style.display = 'none';
+        }
+        return;
+      }
+
+      Tesseract.recognize(
+        file,
+        'eng',
+        { logger: m => {
+          if (m.status === 'recognizing') {
+            const pct = Math.round(m.progress * 100);
+            progressFill.style.width = pct + '%';
+            percentageText.innerText = pct + '%';
+          }
+        }}
+      ).then(({ data: { text } }) => {
+        progressContainer.style.display = 'none';
+        triggerInterpretation(text);
+      }).catch(err => {
+        console.error(err);
+        alert("OCR error. Please type or paste your report content directly.");
+        progressContainer.style.display = 'none';
+      });
+    }
+
+    // Camera Simulation Modals
+    function openCameraSimulation() {
+      document.getElementById('camera-simulation-modal').style.display = 'flex';
+    }
+    function closeCameraSimulation() {
+      document.getElementById('camera-simulation-modal').style.display = 'none';
+    }
+    function captureSimulatedSnapshot() {
+      loadSampleReport(0);
+      closeCameraSimulation();
+    }
+
+    // Load static samples
+    function loadSampleReport(idx) {
+      document.getElementById('report-text-input').value = SAMPLE_REPORTS[idx].text;
+    }
+
+    // Clear session details
+    function clearActiveSession() {
+      document.getElementById('report-text-input').value = "";
+      document.getElementById('welcome-dashboard-state').style.display = 'flex';
+      document.getElementById('results-dashboard-state').style.display = 'none';
+      document.getElementById('emergency-alert-banner').style.display = 'none';
+      document.getElementById('btn-clear-session').style.display = 'none';
+      
+      activeResult = null;
+      if (mapInstance) {
+        mapInstance.remove();
+        mapInstance = null;
+      }
+      document.getElementById('map-section-container').style.display = 'none';
+    }
+
+    // Distance calculation
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371; // km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function fallbackLocalAnalysis(text) {
+      const normalizedText = text.toLowerCase();
+      
+      // Emergency indicators
+      let isEmergency = false;
+      let emergencyReason = null;
+      
+      if (normalizedText.includes('troponin') && (normalizedText.match(/troponin.*(0\.[4-9]|[1-9]\d*)/i) || normalizedText.includes('critical') || normalizedText.includes('high') || normalizedText.includes('5.4'))) {
+        isEmergency = true;
+        emergencyReason = "Critically high Troponin level detected. This is a red-flag emergency indicator that may suggest active heart muscle damage (such as a heart attack). Seek immediate medical attention.";
+      } else if (normalizedText.includes('stroke') || normalizedText.includes('facial droop') || normalizedText.includes('arm weakness') || normalizedText.includes('slurred speech') || normalizedText.includes('hemiparesis')) {
+        isEmergency = true;
+        emergencyReason = "Symptoms or notes indicating a potential stroke (facial asymmetry, weakness, speech difficulties). This is a critical medical emergency. Seek emergency care immediately.";
+      } else if (normalizedText.includes('sepsis') || normalizedText.includes('septic shock') || (normalizedText.includes('lactate') && normalizedText.includes('critical'))) {
+        isEmergency = true;
+        emergencyReason = "Sepsis or critical blood lactate levels mentioned. Sepsis is a life-threatening response to infection. Urgent medical evaluation is required.";
+      } else if (normalizedText.includes('respiratory failure') || normalizedText.includes('severe hypoxia') || normalizedText.includes('ards')) {
+        isEmergency = true;
+        emergencyReason = "Severe respiratory distress or lung failure indicator detected. Immediate clinical intervention is required.";
+      } else if (normalizedText.includes('hemorrhage') || normalizedText.includes('severe bleeding') || normalizedText.includes('internal bleed')) {
+        isEmergency = true;
+        emergencyReason = "Signs or mentions of active internal or severe hemorrhage. Urgent emergency assistance is necessary.";
+      }
+
+      const labValues = [];
+      const glossary = [];
+      const doctorQuestions = [];
+      const lifestyleRecommendations = [];
+      const references = [];
+
+      const labDefs = [
+        {
+          key: 'troponin',
+          name: 'Cardiac Troponin I',
+          regex: /(?:troponin(?:\s+i)?)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 0,
+          maxNormal: 0.04,
+          unit: 'ng/mL',
+          explanation: (val, status) => status === 'High' 
+            ? 'Your troponin level is elevated. Troponin is a protein released when heart muscle is damaged.' 
+            : 'Your troponin level is normal, suggesting no active heart muscle damage.',
+          glossary: {
+            term: 'Troponin',
+            definition: 'A protein found in heart muscle cells. It is released into the blood only when the heart muscle is injured.',
+            analogy: 'Think of troponin as a smoke detector alarm. It should be silent (low/undetectable), but goes off if there is fire (damage) in the building (heart).'
+          }
+        },
+        {
+          key: 'ldl',
+          name: 'LDL Cholesterol (Bad Cholesterol)',
+          regex: /(?:ldl(?:\s+cholesterol)?)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 0,
+          maxNormal: 100,
+          unit: 'mg/dL',
+          explanation: (val, status) => status === 'High'
+            ? 'Your LDL is high. High LDL (bad cholesterol) can lead to plaque build-up in your arteries.'
+            : 'Your LDL cholesterol is within the healthy recommended range.',
+          glossary: {
+            term: 'LDL Cholesterol',
+            definition: "Low-Density Lipoprotein, often called 'bad' cholesterol. It carries cholesterol into your arteries.",
+            analogy: "Think of it as delivery trucks leaving packages (plaque) along the highways (blood vessels), which can cause traffic jams if there are too many."
+          }
+        },
+        {
+          key: 'hdl',
+          name: 'HDL Cholesterol (Good Cholesterol)',
+          regex: /(?:hdl(?:\s+cholesterol)?)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 40,
+          maxNormal: 1000,
+          unit: 'mg/dL',
+          explanation: (val, status) => status === 'Low'
+            ? 'Your HDL is low. HDL (good cholesterol) helps clear bad cholesterol from your bloodstream.'
+            : 'Your HDL cholesterol is healthy, providing good cardiovascular protection.',
+          glossary: {
+            term: 'HDL Cholesterol',
+            definition: "High-Density Lipoprotein, often called 'good' cholesterol. It helps remove other forms of cholesterol from your bloodstream.",
+            analogy: "Think of it as street sweepers that clean up the garbage (excess cholesterol) from your blood vessels and take it to the liver."
+          }
+        },
+        {
+          key: 'cholesterol',
+          name: 'Total Cholesterol',
+          regex: /(?:total\s+cholesterol)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 0,
+          maxNormal: 200,
+          unit: 'mg/dL',
+          explanation: (val, status) => status === 'High'
+            ? 'Your total cholesterol is elevated. Keeping this low reduces cardiovascular risk.'
+            : 'Your total cholesterol level is healthy.',
+          glossary: {
+            term: 'Total Cholesterol',
+            definition: 'The overall amount of cholesterol in your blood, including LDL, HDL, and other types.',
+            analogy: 'The total number of cars on the road, including delivery trucks, street sweepers, and standard cars.'
+          }
+        },
+        {
+          key: 'triglycerides',
+          name: 'Triglycerides',
+          regex: /(?:triglycerides|trig\b)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 0,
+          maxNormal: 150,
+          unit: 'mg/dL',
+          explanation: (val, status) => status === 'High'
+            ? 'Your triglycerides are elevated. These are a type of fat in the blood linked to heart disease risk.'
+            : 'Your triglycerides are in the normal, healthy range.',
+          glossary: {
+            term: 'Triglycerides',
+            definition: 'A type of fat (lipid) in your blood. Unused calories are converted to triglycerides and stored in fat cells.',
+            analogy: 'Extra stored fuel in auxiliary tanks. If you fill up too much and don\'t burn it, the tanks overflow.'
+          }
+        },
+        {
+          key: 'hemoglobin',
+          name: 'Hemoglobin',
+          regex: /(?:hemoglobin|hgb|hb\b)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 12.0,
+          maxNormal: 17.5,
+          unit: 'g/dL',
+          explanation: (val, status) => status === 'Low'
+            ? 'Your hemoglobin is low, suggesting anemia, which can cause fatigue and weakness.'
+            : (status === 'High' ? 'Your hemoglobin is high, which can be due to dehydration or other factors.' : 'Your hemoglobin level is healthy.'),
+          glossary: {
+            term: 'Hemoglobin',
+            definition: 'The protein in red blood cells that carries oxygen from your lungs to the rest of your body.',
+            analogy: 'Tiny cargo trains traveling through your blood, loading up oxygen in the lungs and delivering it to cells.'
+          }
+        },
+        {
+          key: 'wbc',
+          name: 'White Blood Cell Count (WBC)',
+          regex: /(?:wbc|white\s+blood\s+cell(?:s)?)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 4.5,
+          maxNormal: 11.0,
+          unit: 'x10^3/uL',
+          explanation: (val, status) => status === 'High'
+            ? 'Your white blood cell count is high, which often indicates your body is fighting an infection or experiencing inflammation.'
+            : (status === 'Low' ? 'Your white blood cell count is low, which can make it harder to fight off infections.' : 'Your white blood cell count is within the normal range.'),
+          glossary: {
+            term: 'White Blood Cells',
+            definition: 'Cells of the immune system that protect the body against both infectious disease and foreign invaders.',
+            analogy: 'Your body\'s police force and defense department, ready to fight off foreign invaders like bacteria and viruses.'
+          }
+        },
+        {
+          key: 'rbc',
+          name: 'Red Blood Cell Count (RBC)',
+          regex: /(?:rbc|red\s+blood\s+cell(?:s)?)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 4.3,
+          maxNormal: 5.9,
+          unit: 'x10^6/uL',
+          explanation: (val, status) => status === 'Low'
+            ? 'Your red blood cell count is low, which can lead to fatigue due to reduced oxygen delivery.'
+            : (status === 'High' ? 'Your red blood cell count is elevated.' : 'Your red blood cell count is normal.'),
+          glossary: {
+            term: 'Red Blood Cells',
+            definition: 'Blood cells that carry oxygen from the lungs to the body tissues and carbon dioxide away as waste.',
+            analogy: 'The delivery trucks of the blood, carrying oxygen to cells and bringing carbon dioxide waste back.'
+          }
+        },
+        {
+          key: 'platelets',
+          name: 'Platelets (PLT)',
+          regex: /(?:platelet(?:s)?|plt\b)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 150,
+          maxNormal: 450,
+          unit: 'x10^3/uL',
+          explanation: (val, status) => status === 'Low'
+            ? 'Your platelet count is low, which can affect blood clotting and increase bruising/bleeding risk.'
+            : (status === 'High' ? 'Your platelet count is high, which can increase the risk of blood clots.' : 'Your platelet count is in the normal range.'),
+          glossary: {
+            term: 'Platelets',
+            definition: 'Tiny blood cell fragments that help your body form clots to stop bleeding.',
+            analogy: 'Tiny bricklayers. When there is a leak in a blood vessel, they rush to build a wall (clot) to plug it.'
+          }
+        },
+        {
+          key: 'hematocrit',
+          name: 'Hematocrit',
+          regex: /(?:hematocrit|hct\b)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 37.0,
+          maxNormal: 52.0,
+          unit: '%',
+          explanation: (val, status) => status === 'Low'
+            ? 'Your hematocrit is low, indicating a lower volume of red blood cells in your blood, often seen in anemia.'
+            : (status === 'High' ? 'Your hematocrit is high, which can be a sign of dehydration.' : 'Your hematocrit level is normal.'),
+          glossary: {
+            term: 'Hematocrit',
+            definition: 'The proportion of your total blood volume that is composed of red blood cells.',
+            analogy: 'The thickness of your traffic. It shows what percentage of your blood is made up of red blood cell delivery trucks.'
+          }
+        },
+        {
+          key: 'glucose',
+          name: 'Blood Glucose',
+          regex: /(?:glucose|blood\s+sugar|glu\b)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 70,
+          maxNormal: 100,
+          unit: 'mg/dL',
+          explanation: (val, status) => status === 'High'
+            ? 'Your blood glucose is high. If fasting, this can indicate prediabetes or diabetes.'
+            : (status === 'Low' ? 'Your blood glucose is low, which can lead to shakiness or fatigue.' : 'Your blood glucose is within the normal healthy range.'),
+          glossary: {
+            term: 'Blood Glucose',
+            definition: 'The main sugar found in your blood, coming from the food you eat. It is your body\'s primary energy source.',
+            analogy: 'Fuel for your car. Your cells need it to run, but too much fuel overflowing in the engine can cause long-term damage.'
+          }
+        },
+        {
+          key: 'sodium',
+          name: 'Sodium',
+          regex: /(?:sodium)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 135,
+          maxNormal: 145,
+          unit: 'mEq/L',
+          explanation: (val, status) => status === 'Low'
+            ? 'Your sodium is low, which can affect fluid balance and brain function.'
+            : (status === 'High' ? 'Your sodium is high, which is often a sign of dehydration.' : 'Your sodium level is normal.'),
+          glossary: {
+            term: 'Sodium',
+            definition: 'An essential electrolyte that helps maintain the balance of water in and around your cells.',
+            analogy: 'The salt balance regulator. It keeps the water levels inside your body\'s cells balanced and perfect.'
+          }
+        },
+        {
+          key: 'potassium',
+          name: 'Potassium',
+          regex: /(?:potassium)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 3.5,
+          maxNormal: 5.0,
+          unit: 'mEq/L',
+          explanation: (val, status) => status === 'Low'
+            ? 'Your potassium is low, which can cause muscle cramps and heart rhythm issues.'
+            : (status === 'High' ? 'Your potassium is high, which requires careful monitoring as it can affect heart function.' : 'Your potassium level is normal.'),
+          glossary: {
+            term: 'Potassium',
+            definition: 'An electrolyte vital for the proper function of nerves, muscles, and the heart.',
+            analogy: 'The electrical coordinator for your muscles and heart, ensuring smooth beats and contractions.'
+          }
+        },
+        {
+          key: 'chloride',
+          name: 'Chloride',
+          regex: /(?:chloride)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 96,
+          maxNormal: 106,
+          unit: 'mEq/L',
+          explanation: (val, status) => status === 'Low'
+            ? 'Your chloride level is low, which can be due to excessive sweating or vomiting.'
+            : (status === 'High' ? 'Your chloride level is high.' : 'Your chloride level is normal.'),
+          glossary: {
+            term: 'Chloride',
+            definition: 'An electrolyte that works with sodium and potassium to maintain proper fluid balance and acid-base balance.',
+            analogy: 'Part of the fluid balance trio. It works in the background with sodium to keep cellular hydration in check.'
+          }
+        },
+        {
+          key: 'calcium',
+          name: 'Calcium',
+          regex: /(?:calcium)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 8.5,
+          maxNormal: 10.5,
+          unit: 'mg/dL',
+          explanation: (val, status) => status === 'Low'
+            ? 'Your calcium is low, which can impact bone and muscle health.'
+            : (status === 'High' ? 'Your calcium is elevated.' : 'Your calcium level is normal.'),
+          glossary: {
+            term: 'Calcium',
+            definition: 'A mineral necessary for bone strength, muscle contractions, and nerve signaling.',
+            analogy: 'The concrete for your bones and the electrical messenger for muscle contractions.'
+          }
+        },
+        {
+          key: 'bun',
+          name: 'Blood Urea Nitrogen (BUN)',
+          regex: /(?:bun\b|blood\s+urea\s+nitrogen)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 7,
+          maxNormal: 20,
+          unit: 'mg/dL',
+          explanation: (val, status) => status === 'High'
+            ? 'Your BUN is high, which can suggest that your kidneys are not filtering waste efficiently, or you are dehydrated.'
+            : 'Your BUN level is normal.',
+          glossary: {
+            term: 'BUN',
+            definition: 'Blood Urea Nitrogen, a waste product created in the liver and filtered out by the kidneys.',
+            analogy: 'The waste filters. High BUN is like trash piling up because the disposal system (kidneys) is running slowly or you need to flush it out with water (hydrate).'
+          }
+        },
+        {
+          key: 'creatinine',
+          name: 'Creatinine',
+          regex: /(?:creatinine|cr\b)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 0.6,
+          maxNormal: 1.2,
+          unit: 'mg/dL',
+          explanation: (val, status) => status === 'High'
+            ? 'Your creatinine is elevated, which can indicate that your kidneys are working harder than usual to filter waste.'
+            : 'Your creatinine level is within the normal range.',
+          glossary: {
+            term: 'Creatinine',
+            definition: 'A chemical waste molecule that is generated from muscle metabolism and filtered out by the kidneys.',
+            analogy: 'A key indicator of kidney health. Think of it as a dipstick that shows how clean and effective your kidney filters are.'
+          }
+        },
+        {
+          key: 'tsh',
+          name: 'Thyroid Stimulating Hormone (TSH)',
+          regex: /(?:tsh\b|thyroid\s+stimulating\s+hormone)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 0.4,
+          maxNormal: 4.0,
+          unit: 'mIU/L',
+          explanation: (val, status) => status === 'High'
+            ? 'Your TSH is high, which often indicates an underactive thyroid (hypothyroidism).'
+            : (status === 'Low' ? 'Your TSH is low, which often indicates an overactive thyroid (hyperthyroidism).' : 'Your TSH level is normal.'),
+          glossary: {
+            term: 'TSH',
+            definition: 'A hormone produced by the pituitary gland that tells the thyroid gland how much thyroid hormone to release.',
+            analogy: 'The thyroid thermostat. If the thyroid gland is running cold (underactive), the thermostat dials up (TSH goes high) to push it to work harder.'
+          }
+        },
+        {
+          key: 'alt',
+          name: 'Alanine Aminotransferase (ALT)',
+          regex: /(?:alt\b|sgpt|alanine\s+aminotransferase)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 7,
+          maxNormal: 56,
+          unit: 'U/L',
+          explanation: (val, status) => status === 'High'
+            ? 'Your ALT is elevated, which can be a sign of liver irritation or inflammation.'
+            : 'Your ALT liver enzyme is in the normal range.',
+          glossary: {
+            term: 'ALT',
+            definition: 'An enzyme found mostly in the cells of the liver. High levels in the blood can indicate liver damage.',
+            analogy: 'A liver stress sensor. Think of it as a warning light that turns on when the liver cells are working under strain.'
+          }
+        },
+        {
+          key: 'ast',
+          name: 'Aspartate Aminotransferase (AST)',
+          regex: /(?:ast\b|sgot|aspartate\s+aminotransferase)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,
+          minNormal: 10,
+          maxNormal: 40,
+          unit: 'U/L',
+          explanation: (val, status) => status === 'High'
+            ? 'Your AST is elevated, which can indicate liver or muscle strain.'
+            : 'Your AST enzyme is in the normal range.',
+          glossary: {
+            term: 'AST',
+            definition: 'An enzyme found in high amounts in the liver, heart, and muscle tissue.',
+            analogy: 'Another stress sensor. Since it\'s found in both liver and muscles, a high value tells us to look closer at liver or muscle stress.'
+          }
+        }
+      ];
+
+      labDefs.forEach(def => {
+        const match = text.match(def.regex);
+        if (match) {
+          const val = parseFloat(match[1]);
+          let status = 'Normal';
+          if (val < def.minNormal) {
+            status = 'Low';
+          } else if (val > def.maxNormal) {
+            status = 'High';
+          }
+          
+          const relevanceScore = status === 'Normal' ? 3 : (status === 'High' ? 8 : 7);
+          
+          labValues.push({
+            name: def.name,
+            value: `${val} ${def.unit}`,
+            referenceRange: def.minNormal === 0 
+              ? `< ${def.maxNormal} ${def.unit}` 
+              : `${def.minNormal} - ${def.maxNormal} ${def.unit}`,
+            status: status,
+            relevanceScore: relevanceScore,
+            explanation: def.explanation(val, status)
+          });
+          
+          if (def.glossary) {
+            glossary.push(def.glossary);
+          }
+          
+          if (status !== 'Normal') {
+            if (def.key === 'troponin') {
+              isEmergency = true;
+              emergencyReason = "Critically high Troponin level detected. This is a red-flag emergency indicator that may suggest active heart muscle damage (such as a heart attack). Seek immediate medical attention.";
+            } else if (def.key === 'ldl' || def.key === 'cholesterol' || def.key === 'triglycerides') {
+              if (!doctorQuestions.includes("What dietary changes are most effective for lowering my cholesterol?")) {
+                doctorQuestions.push(
+                  "What dietary changes are most effective for lowering my cholesterol?",
+                  "Do you recommend starting cholesterol medication, or should we try lifestyle adjustments first?",
+                  "When should I repeat this blood test to check my progress?"
+                );
+              }
+              if (!lifestyleRecommendations.includes("Focus on heart-healthy fats (like olive oil, avocados) and limit saturated and trans fats.")) {
+                lifestyleRecommendations.push(
+                  "Focus on heart-healthy fats (like olive oil, avocados) and limit saturated and trans fats.",
+                  "Increase soluble fiber intake by eating more oats, beans, lentils, fruits, and vegetables.",
+                  "Aim for at least 150 minutes of moderate cardiovascular exercise per week."
+                );
+              }
+              if (!references.some(r => r.sourceName === 'Mayo Clinic - High Cholesterol Info')) {
+                references.push({
+                  sourceName: "Mayo Clinic - High Cholesterol Info",
+                  url: "https://www.mayoclinic.org/diseases-conditions/high-blood-cholesterol/symptoms-causes/syc-20350800"
+                });
+              }
+            } else if (def.key === 'hemoglobin' || def.key === 'rbc' || def.key === 'hematocrit') {
+              if (!doctorQuestions.includes("Could my low blood count be caused by iron deficiency or something else?")) {
+                doctorQuestions.push(
+                  "Could my low blood count be caused by iron deficiency or something else?",
+                  "Should I take an iron supplement, and if so, what type and dosage?",
+                  "Are there other tests (like ferritin or Vitamin B12) we should run?"
+                );
+              }
+              if (!lifestyleRecommendations.includes("Incorporate more iron-rich foods into your diet, such as spinach, red meat, beans, and iron-fortified cereals.")) {
+                lifestyleRecommendations.push(
+                  "Incorporate more iron-rich foods into your diet, such as spinach, red meat, beans, and iron-fortified cereals.",
+                  "Consume Vitamin C (like oranges, strawberries) alongside iron-rich foods to boost absorption."
+                );
+              }
+              if (!references.some(r => r.sourceName === 'CDC - Anemia Information')) {
+                references.push({
+                  sourceName: "CDC - Anemia Information",
+                  url: "https://www.cdc.gov/ncbddd/blooddisorders/anemia/index.html"
+                });
+              }
+            } else if (def.key === 'glucose') {
+              doctorQuestions.push(
+                "Is this blood glucose level diagnostic for prediabetes or diabetes?",
+                "Do you recommend checking my HbA1c (a 3-month blood sugar average)?",
+                "How can I adjust my diet and activity levels to help lower my blood sugar?"
+              );
+              lifestyleRecommendations.push(
+                "Choose complex carbohydrates with a low glycemic index (whole grains, non-starchy vegetables) over refined sugars.",
+                "Engage in regular physical activity, which helps your muscles absorb sugar out of your bloodstream."
+              );
+              if (!references.some(r => r.sourceName === 'WHO - Diabetes Facts')) {
+                references.push({
+                  sourceName: "WHO - Diabetes Facts",
+                  url: "https://www.who.int/news-room/fact-sheets/detail/diabetes"
+                });
+              }
+            } else if (def.key === 'creatinine' || def.key === 'bun') {
+              if (!doctorQuestions.includes("Could my elevated kidney values be related to dehydration or is there another cause?")) {
+                doctorQuestions.push(
+                  "Could my elevated kidney values be related to dehydration or is there another cause?",
+                  "Are there medications I should avoid to protect my kidney function (like NSAIDs)?",
+                  "Should we monitor my kidney function with a follow-up test?"
+                );
+              }
+              if (!lifestyleRecommendations.includes("Ensure you stay properly hydrated by drinking water regularly throughout the day.")) {
+                lifestyleRecommendations.push(
+                  "Ensure you stay properly hydrated by drinking water regularly throughout the day.",
+                  "Talk to your doctor before taking NSAID pain relievers (like ibuprofen), which can strain the kidneys."
+                );
+              }
+              if (!references.some(r => r.sourceName === 'Mayo Clinic - Kidney Function')) {
+                references.push({
+                  sourceName: "Mayo Clinic - Kidney Function",
+                  url: "https://www.mayoclinic.org/diseases-conditions/chronic-kidney-disease/symptoms-causes/syc-20354521"
+                });
+              }
+            } else if (def.key === 'tsh') {
+              doctorQuestions.push(
+                "Does my TSH value suggest a thyroid disorder (like hypothyroidism or hyperthyroidism)?",
+                "Should we test free T4 or other thyroid hormone levels?",
+                "What symptoms should I look out for regarding thyroid dysfunction?"
+              );
+              lifestyleRecommendations.push(
+                "Ensure you get adequate rest and manage stress, which can affect hormone balance.",
+                "Discuss with your doctor whether any dietary changes or supplements are recommended for your thyroid."
+              );
+              if (!references.some(r => r.sourceName === 'American Thyroid Association')) {
+                references.push({
+                  sourceName: "American Thyroid Association",
+                  url: "https://www.thyroid.org/thyroid-information/"
+                });
+              }
+            } else if (def.key === 'wbc' || def.key === 'platelets') {
+              if (!doctorQuestions.includes("What is the likely cause of my abnormal blood cell count?")) {
+                doctorQuestions.push(
+                  "What is the likely cause of my abnormal blood cell count?",
+                  "Are there follow-up blood tests we should run to monitor this?",
+                  "Are there any signs or symptoms (like fever or bleeding) that should prompt immediate care?"
+                );
+              }
+              if (!lifestyleRecommendations.includes("Focus on a diet rich in vitamins and minerals to support your immune and blood health.")) {
+                lifestyleRecommendations.push(
+                  "Focus on a diet rich in vitamins and minerals to support your immune and blood health.",
+                  "Ensure good hand hygiene and avoid contact with sick individuals if your white blood cells are low."
+                );
+              }
+              if (!references.some(r => r.sourceName === 'NIH - Blood Disorders')) {
+                references.push({
+                  sourceName: "NIH - Blood Disorders Info",
+                  url: "https://www.nhlbi.nih.gov/health-topics/blood-diseases"
+                });
+              }
+            } else if (def.key === 'alt' || def.key === 'ast') {
+              if (!doctorQuestions.includes("What could be causing my elevated liver enzymes?")) {
+                doctorQuestions.push(
+                  "What could be causing my elevated liver enzymes?",
+                  "Are there medications, supplements, or alcohol consumption habits I should adjust?",
+                  "When should we re-test my liver enzyme levels?"
+                );
+              }
+              if (!lifestyleRecommendations.includes("Maintain a healthy diet, limit alcohol intake, and consult your doctor before starting new supplements.")) {
+                lifestyleRecommendations.push(
+                  "Maintain a healthy diet, limit alcohol intake, and consult your doctor before starting new supplements.",
+                  "Engage in regular physical activity to help reduce liver fat (fatty liver risk)."
+                );
+              }
+              if (!references.some(r => r.sourceName === 'Mayo Clinic - Liver Dysfunction')) {
+                references.push({
+                  sourceName: "Mayo Clinic - Liver Dysfunction Info",
+                  url: "https://www.mayoclinic.org/symptoms/elevated-liver-enzymes/basics/definition/sym-20050830"
+                });
+              }
+            }
+          }
+        }
+      });
+
+      // Generic parser for other tests in the report (position-aware tokenizing scanner)
+      const numberPositions = [];
+      const regexForNumbers = /\b(\d+(?:\.\d+)?)\b/g;
+      let numMatch;
+      while ((numMatch = regexForNumbers.exec(text)) !== null) {
+        numberPositions.push({
+          value: parseFloat(numMatch[1]),
+          valueStr: numMatch[1],
+          index: numMatch.index,
+          length: numMatch[1].length
+        });
+      }
+
+      const consumedIndices = new Set();
+      const sepRegex = /\b(investigation|observed\s+value|value|unit|biological\s+reference\s+interval|reference\s+range|reference\s+interval|interval|range|result|test\s+name|test|biological|reference|specimen|method|technology|date|time|patient|ref|normal|flag)\b/gi;
+
+      numberPositions.forEach((numPos, idx) => {
+        if (consumedIndices.has(numPos.index)) return;
+
+        const val = numPos.value;
+
+        // Skip year numbers and obvious small numbers like single digits that aren't test values
+        if (val >= 1900 && val <= 2100) return;
+
+        // Skip date-like numbers (preceded or followed by slashes or dashes)
+        const precedingChar = text.charAt(numPos.index - 1);
+        const succeedingChar = text.charAt(numPos.index + numPos.length);
+        if (precedingChar === '/' || precedingChar === '-' || succeedingChar === '/' || succeedingChar === '-') {
+          return;
+        }
+
+        // Determine segments before and after the number
+        const startIdx = Math.max(0, numPos.index - 120);
+        const prevNumPos = idx > 0 ? numberPositions[idx - 1] : null;
+        const actualStartIdx = prevNumPos ? Math.max(prevNumPos.index + prevNumPos.length, startIdx) : startIdx;
+        
+        let precedingText = text.substring(actualStartIdx, numPos.index);
+        const endIdx = Math.min(text.length, numPos.index + numPos.length + 80);
+        let succeedingText = text.substring(numPos.index + numPos.length, endIdx);
+
+        // Extract potential units and ranges from succeedingText
+        let minNormal = null;
+        let maxNormal = null;
+        let refRangeStr = "N/A";
+        let status = "Normal";
+        let unit = "";
+
+        // Find other numbers in succeedingText to parse ranges
+        const nextNumMatches = [];
+        const nextNumRegex = /(\d+(?:\.\d+)?)/g;
+        let nextMatch;
+        while ((nextMatch = nextNumRegex.exec(succeedingText)) !== null) {
+          nextNumMatches.push({
+            value: parseFloat(nextMatch[1]),
+            valueStr: nextMatch[1],
+            index: numPos.index + numPos.length + nextMatch.index,
+            length: nextMatch[1].length
+          });
+        }
+
+        const nextNum = nextNumMatches.find(n => (n.index - (numPos.index + numPos.length)) < 40);
+        if (nextNum) {
+          const textBetween = text.substring(numPos.index + numPos.length, nextNum.index).toLowerCase();
+          const secondNextNum = nextNumMatches.find(n => n.index > nextNum.index && (n.index - (nextNum.index + nextNum.length)) < 15);
+          const isRange = secondNextNum && text.substring(nextNum.index + nextNum.length, secondNextNum.index).includes('-');
+
+          if (isRange) {
+            minNormal = nextNum.value;
+            maxNormal = secondNextNum.value;
+            refRangeStr = `${minNormal} - ${maxNormal}`;
+            consumedIndices.add(nextNum.index);
+            consumedIndices.add(secondNextNum.index);
+            unit = textBetween.replace(/[^a-zA-Z%^*/\d-]/g, '').trim();
+          } else if (textBetween.includes('<') || textBetween.includes('less')) {
+            maxNormal = nextNum.value;
+            refRangeStr = `< ${maxNormal}`;
+            consumedIndices.add(nextNum.index);
+            unit = textBetween.replace(/[^a-zA-Z%^*/\d-]/g, '').trim();
+          } else if (textBetween.includes('>') || textBetween.includes('great')) {
+            minNormal = nextNum.value;
+            refRangeStr = `> ${minNormal}`;
+            consumedIndices.add(nextNum.index);
+            unit = textBetween.replace(/[^a-zA-Z%^*/\d-]/g, '').trim();
+          } else {
+            unit = textBetween.replace(/[^a-zA-Z%^*/\d-]/g, '').trim();
+          }
+        } else {
+          const firstWordMatch = succeedingText.match(/^\s*([a-zA-Z%^*/\d-]+)/);
+          if (firstWordMatch) {
+            unit = firstWordMatch[1].trim();
+          }
+        }
+
+        // Parse the test name from precedingText
+        const parts = precedingText.split(sepRegex);
+        let rawName = parts[parts.length - 1];
+
+        // Clean name from symbols and spaces
+        rawName = rawName.replace(/^[^a-zA-Z0-9(]+|[^a-zA-Z0-9)]+$/g, '').trim();
+
+        if (rawName.length < 2) return;
+
+        // Filter out dates and generic headers
+        const skipTerms = [
+          'patient', 'date', 'age', 'id', 'time', 'phone', 'report', 'test', 'result', 'range', 'reference', 'page', 'sex', 'gender', 'mrn', 'doctor', 'physician', 'clinic', 'hospital', 'total', 'low', 'high', 'normal',
+          'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december',
+          'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'dob'
+        ];
+        const rawNameLower = rawName.toLowerCase();
+        if (skipTerms.includes(rawNameLower) || /^\d+$/.test(rawName)) return;
+
+        // Discard blocks of prose that are mistakenly parsed as test names
+        const proseKeywords = ['which', 'catalyses', 'oxidation', 'reactions', 'individuals', 'during', 'symptoms', 'history', 'report', 'recommendation', 'consult', 'prepare'];
+        if (rawName.length > 75 || proseKeywords.some(keyword => rawNameLower.includes(keyword))) {
+          return;
+        }
+
+        // Check duplicate
+        const alreadyMatched = labValues.some(v => v.name.toLowerCase() === rawNameLower || rawNameLower.includes(v.name.toLowerCase()) || v.name.toLowerCase().includes(rawNameLower));
+        if (alreadyMatched) return;
+
+        // Compute status
+        if (minNormal !== null && val < minNormal) {
+          status = "Low";
+        } else if (maxNormal !== null && val > maxNormal) {
+          status = "High";
+        } else {
+          status = "Normal";
+        }
+
+        // Format unit
+        if (unit.length > 10) unit = unit.substring(0, 10);
+        const relevanceScore = status === 'Normal' ? 3 : (status === 'High' ? 8 : 7);
+        const name = rawName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+        const explanation = status === 'High'
+          ? `Your ${name} is elevated compared to the standard reference range.`
+          : (status === 'Low' ? `Your ${name} is below the standard reference range.` : `Your ${name} is within the normal healthy range.`);
+
+        labValues.push({
+          name,
+          value: `${val} ${unit}`,
+          referenceRange: refRangeStr + (unit ? ` ${unit}` : ''),
+          status,
+          relevanceScore,
+          explanation
+        });
+
+        glossary.push({
+          term: name,
+          definition: `A test measuring the level of ${name} in your body.`,
+          analogy: `Think of ${name} as a component in your body's systems, which should be kept in balance.`
+        });
+
+        if (status !== 'Normal') {
+          doctorQuestions.push(`What could be causing my ${name} to be ${status.toLowerCase()}?`);
+          doctorQuestions.push(`Should we monitor my ${name} levels with another test?`);
+          lifestyleRecommendations.push(`Consult your physician regarding steps to help manage your ${status.toLowerCase()} ${name} levels.`);
+        }
+      });
+
+      if (labValues.length === 0) {
+        labValues.push({
+          name: "General Health Summary",
+          value: "See Explanation",
+          referenceRange: "N/A",
+          status: "Normal",
+          explanation: "No specific laboratory values were recognized automatically. The system will simplify the general clinical notes provided below."
+        });
+      }
+
+      if (doctorQuestions.length === 0) {
+        doctorQuestions.push(
+          "What do these overall results mean for my health?",
+          "Are there any changes I need to make to my lifestyle based on this report?",
+          "When do I need to follow up next?"
+        );
+      }
+
+      if (lifestyleRecommendations.length === 0) {
+        lifestyleRecommendations.push(
+          "Maintain a balanced diet rich in vegetables, lean proteins, and whole grains.",
+          "Stay hydrated by drinking plenty of water throughout the day.",
+          "Aim for 7 to 8 hours of quality sleep each night to help your body recover."
+        );
+      }
+
+      if (references.length === 0) {
+        references.push({
+          sourceName: "PubMed Central (PMC)",
+          url: "https://www.ncbi.nlm.nih.gov/pmc/"
+        });
+      }
+
+      const highValues = labValues.filter(v => v.status === 'High').map(v => v.name);
+      const lowValues = labValues.filter(v => v.status === 'Low').map(v => v.name);
+      
+      let dynamicSummary = "";
+      if (highValues.length > 0 || lowValues.length > 0) {
+        dynamicSummary = "We analyzed your report and identified some areas that may need attention. ";
+        if (highValues.length > 0) {
+          dynamicSummary += `Specifically, we noticed elevated levels for: ${highValues.join(', ')}. `;
+        }
+        if (lowValues.length > 0) {
+          dynamicSummary += `We also found lower-than-normal levels for: ${lowValues.join(', ')}. `;
+        }
+        dynamicSummary += "Please review the details below and discuss these results with your doctor.";
+      } else if (labValues.length > 0 && labValues[0].name !== "General Health Summary") {
+        dynamicSummary = "We analyzed your report and found that all recognized laboratory values (including " + 
+                         labValues.map(v => v.name).join(', ') + 
+                         ") are within the standard reference ranges.";
+      } else {
+        dynamicSummary = "We've scanned your report, but did not recognize any standard laboratory test values automatically. Please review the raw text below or upload a report with standard metrics (like Lipids, CBC, or CMP values) for a detailed breakdown.";
+      }
+
+      return {
+        isEmergency,
+        emergencyReason,
+        simplifiedSummary: dynamicSummary,
+        labValues,
+        glossary,
+        doctorQuestions,
+        lifestyleRecommendations,
+        references
+      };
+    }
+
+    // Core Interpretation execution
+    async function triggerInterpretation(overrideText = null) {
+      const text = (typeof overrideText === 'string') ? overrideText : document.getElementById('report-text-input').value;
+      if (typeof overrideText === 'string') {
+        document.getElementById('report-text-input').value = overrideText;
+      }
+      if (!text.trim()) {
+        alert("Please enter or scan medical report text first.");
+        return;
+      }
+
+      const welcomeState = document.getElementById('welcome-dashboard-state');
+      const loadingState = document.getElementById('loading-dashboard-state');
+      const resultsState = document.getElementById('results-dashboard-state');
+      const clearBtn = document.getElementById('btn-clear-session');
+
+      welcomeState.style.display = 'none';
+      resultsState.style.display = 'none';
+      loadingState.style.display = 'flex';
+      clearBtn.style.display = 'inline-block';
+
+      // Determine provider key
+      if (apiProvider === 'local' || !apiKey) {
+        // Run locally with delay to simulate processing
+        setTimeout(() => {
+          try {
+            const data = fallbackLocalAnalysis(text);
+            renderAnalysisResult(data);
+          } catch(e) {
+            alert("Error running local parser.");
+          } finally {
+            loadingState.style.display = 'none';
+          }
+        }, 1200);
+        return;
+      }
+
+      // Browser direct call to LLM
+      const prompt = buildAnalysisPrompt(text);
+      let warningMsg = "";
+      
+      try {
+        let rawResponseText = "";
+        
+        if (apiProvider === 'gemini') {
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+              })
+            }
+          );
+          if (!response.ok) throw new Error("Gemini fetch failed");
+          const resJson = await response.json();
+          rawResponseText = resJson.candidates[0].content.parts[0].text;
+        } else if (apiProvider === 'openai') {
+          const response = await fetch(
+            'https://api.openai.com/v1/chat/completions',
+            {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + apiKey
+              },
+              body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [{ role: "user", content: prompt }],
+                response_format: { type: "json_object" }
+              })
+            }
+          );
+          if (!response.ok) throw new Error("OpenAI fetch failed");
+          const resJson = await response.json();
+          rawResponseText = resJson.choices[0].message.content;
+        }
+
+        let cleaned = rawResponseText.trim();
+        if (cleaned.startsWith('```json')) cleaned = cleaned.substring(7);
+        else if (cleaned.startsWith('```')) cleaned = cleaned.substring(3);
+        if (cleaned.endsWith('```')) cleaned = cleaned.substring(0, cleaned.length - 3);
+
+        const data = JSON.parse(cleaned.trim());
+        renderAnalysisResult(data);
+      } catch (err) {
+        console.error("API failed, using local rules:", err);
+        const data = fallbackLocalAnalysis(text);
+        data.warning = "AI request failed or API key was invalid. Displaying local rules analysis instead.";
+        renderAnalysisResult(data);
+      } finally {
+        loadingState.style.display = 'none';
+      }
+    }
+
+    // Render results in DOM
+    function renderAnalysisResult(data) {
+      activeResult = data;
+      
+      const resultsState = document.getElementById('results-dashboard-state');
+      resultsState.style.display = 'flex';
+
+      // Warning box
+      const warningBar = document.getElementById('api-warning-bar');
+      if (data.warning) {
+        warningBar.innerText = "⚠ " + data.warning;
+        warningBar.style.display = 'block';
+      } else {
+        warningBar.style.display = 'none';
+      }
+
+      // Emergency checks
+      const emergencyBanner = document.getElementById('emergency-alert-banner');
+      if (data.isEmergency) {
+        emergencyBanner.style.display = 'flex';
+        document.getElementById('emergency-explanation-text').innerText = data.emergencyReason;
+        locateEmergencyFacilities(); // automatically search hospitals
+      } else {
+        emergencyBanner.style.display = 'none';
+      }
+
+      // Summary text (clickable terms mapping)
+      let summaryText = data.simplifiedSummary || data.simplified_summary || data.summary || data.summaryText || "";
+      
+      // Glossary injection
+      const glossaryData = data && Array.isArray(data.glossary || data.medicalGlossary || data.medical_glossary)
+        ? (data.glossary || data.medicalGlossary || data.medical_glossary)
+        : [];
+
+      if (glossaryData.length > 0) {
+        glossaryData.forEach(gItem => {
+          if (!gItem || typeof (gItem.term || gItem.word || gItem.name) !== 'string') return;
+          const termName = gItem.term || gItem.word || gItem.name;
+          const escaped = termName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+          const regex = new RegExp(`\\b(${escaped})\\b`, 'gi');
+          summaryText = summaryText.replace(regex, `<span class="clickable-term" onclick="openGlossaryTermModal('${termName}')">$1</span>`);
+        });
+      }
+      document.getElementById('simplified-summary-paragraph').innerHTML = summaryText;
+
+      // Glossary list
+      const glossaryList = document.getElementById('glossary-items-list');
+      glossaryList.innerHTML = "";
+      if (glossaryData.length > 0) {
+        glossaryData.forEach(gItem => {
+          if (!gItem) return;
+          const term = gItem.term || gItem.word || gItem.name || "";
+          const definition = gItem.definition || gItem.meaning || "";
+          const analogy = gItem.analogy || gItem.comparison || "";
+          const div = document.createElement('div');
+          div.className = "glossary-item";
+          div.innerHTML = `
+            <div class="glossary-term">${term}</div>
+            <div class="glossary-def">${definition}</div>
+            ${analogy ? `<div class="glossary-analogy">💡 ${analogy}</div>` : ''}
+          `;
+          glossaryList.appendChild(div);
+        });
+      } else {
+        glossaryList.innerHTML = `<p style="font-size:0.9rem; color:var(--text-secondary);">No medical terminology detected in summary.</p>`;
+      }
+
+      // Lab values grid with grouping
+      const labGrid = document.getElementById('lab-cards-grid');
+      labGrid.innerHTML = "";
+
+      const LAB_GROUP_META = {
+        High: { title: 'High — Needs Attention' },
+        Low: { title: 'Low — Below Normal' },
+        Normal: { title: 'Normal — Within Range' },
+      };
+
+      function normalizeLabStatus(status) {
+        const s = (status || 'Normal').toLowerCase();
+        if (s === 'borderline' || s === 'high') return 'High';
+        if (s === 'low') return 'Low';
+        return 'Normal';
+      }
+
+      const GROUP_ORDER = ['High', 'Low', 'Normal'];
+      const grouped = GROUP_ORDER.map(status => {
+        return {
+          status,
+          title: LAB_GROUP_META[status].title,
+          items: (data.labValues || data.lab_values || data.labs || [])
+            .map((lab, index) => ({
+              ...lab,
+              status: normalizeLabStatus(lab.status),
+              _index: index,
+            }))
+            .filter(lab => lab.status === status)
+            .sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0) || a._index - b._index)
+        };
+      }).filter(group => group.items.length > 0);
+
+      grouped.forEach(group => {
+        const section = document.createElement('section');
+        section.className = 'lab-group';
+
+        const header = document.createElement('div');
+        header.className = `lab-group-header lab-group-header-${group.status.toLowerCase()}`;
+        header.innerHTML = `
+          <h4>${group.title}</h4>
+          <span class="lab-group-count">${group.items.length}</span>
+        `;
+        section.appendChild(header);
+
+        const cardGrid = document.createElement('div');
+        cardGrid.className = 'lab-grid';
+
+        group.items.forEach(lab => {
+          const div = document.createElement('div');
+          const statusClass = lab.status.toLowerCase();
+          div.className = `lab-card ${statusClass}`;
+          div.innerHTML = `
+            <div class="lab-title">${lab.name}</div>
+            <div class="lab-meta">
+              <span class="lab-val">${lab.value}</span>
+              <span class="lab-status">${lab.status}</span>
+            </div>
+            <div class="lab-range">Reference: ${lab.referenceRange}</div>
+            <p class="lab-desc">${lab.explanation}</p>
+          `;
+          cardGrid.appendChild(div);
+        });
+
+        section.appendChild(cardGrid);
+        labGrid.appendChild(section);
+      });
+
+      // Doctor Questions
+      const questionsContainer = document.getElementById('doctor-questions-container');
+      questionsContainer.innerHTML = "";
+      const questionsList = data.doctorQuestions || data.doctor_questions || data.questions || [];
+      questionsList.forEach((q, idx) => {
+        const div = document.createElement('div');
+        div.className = "question-item";
+        div.innerHTML = `
+          <input type="checkbox" class="question-checkbox" id="q-check-${idx}">
+          <span style="font-size: 0.95rem; line-height: 1.4;">${q}</span>
+        `;
+        questionsContainer.appendChild(div);
+      });
+
+      // Wellness Recommendations
+      const wellnessList = document.getElementById('wellness-recommendations-list');
+      wellnessList.innerHTML = "";
+      const recommendationsList = data.lifestyleRecommendations || data.lifestyle_recommendations || data.lifestyle || [];
+      recommendationsList.forEach(rec => {
+        const div = document.createElement('div');
+        div.className = "lifestyle-item";
+        div.innerHTML = `
+          <i data-lucide="check-circle-2" style="stroke: #10b981; width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px;"></i>
+          <span class="lifestyle-item-text">${rec}</span>
+        `;
+        wellnessList.appendChild(div);
+      });
+
+      // References
+      const referencesContainer = document.getElementById('references-links-container');
+      referencesContainer.innerHTML = "";
+      const refsList = data.references || data.sources || [];
+      refsList.forEach(ref => {
+        const a = document.createElement('a');
+        a.className = "reference-link";
+        a.href = ref.url || ref.link || "#";
+        a.target = "_blank";
+        a.innerHTML = `
+          <span>${ref.sourceName || ref.source || ref.name || "Reference"}</span>
+          <i data-lucide="external-link" style="width: 12px; height: 12px;"></i>
+        `;
+        referencesContainer.appendChild(a);
+      });
+
+      // Refresh icons
+      if (window.lucide) window.lucide.createIcons();
+      switchDashboardTab('summary');
+    }
+
+    // Tab switcher
+    function switchDashboardTab(tabId) {
+      // Buttons
+      ['summary', 'values', 'questions', 'lifestyle'].forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const panel = document.getElementById(`tab-panel-${t}`);
+        if (t === tabId) {
+          btn.classList.add('active');
+          panel.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+          panel.classList.remove('active');
+        }
+      });
+    }
+
+    // Glossary Popup Modals
+    function openGlossaryTermModal(termName) {
+      if (!activeResult) return;
+      const glossaryData = activeResult && Array.isArray(activeResult.glossary || activeResult.medicalGlossary || activeResult.medical_glossary)
+        ? (activeResult.glossary || activeResult.medicalGlossary || activeResult.medical_glossary)
+        : [];
+      const gItem = glossaryData.find(g => {
+        if (!g) return false;
+        const term = g.term || g.word || g.name || "";
+        return term.toLowerCase() === termName.toLowerCase();
+      });
+      if (!gItem) return;
+
+      const term = gItem.term || gItem.word || gItem.name || "";
+      const definition = gItem.definition || gItem.meaning || "";
+      const analogy = gItem.analogy || gItem.comparison || "";
+
+      document.getElementById('modal-term-title').innerText = term;
+      document.getElementById('modal-term-definition').innerText = definition;
+      
+      const analogyBox = document.getElementById('modal-term-analogy-box');
+      if (analogy) {
+        analogyBox.style.display = 'block';
+        document.getElementById('modal-term-analogy-text').innerText = analogy;
+      } else {
+        analogyBox.style.display = 'none';
+      }
+
+      document.getElementById('glossary-modal-overlay').style.display = 'flex';
+    }
+
+    function closeGlossaryModal() {
+      document.getElementById('glossary-modal-overlay').style.display = 'none';
+    }
+
+    // Geolocation and OSM Overpass integration
+    function locateEmergencyFacilities() {
+      const locateLabel = document.getElementById('locate-btn-label');
+      const errDisplay = document.getElementById('location-error-display');
+      
+      if (!navigator.geolocation) {
+        errDisplay.innerText = "GPS Geolocation is not supported by your browser.";
+        errDisplay.style.display = 'block';
+        return;
+      }
+
+      locateLabel.innerText = "Locating...";
+      errDisplay.style.display = 'none';
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          locateLabel.innerText = "Facilities Found";
+
+          // Show Map Section
+          document.getElementById('map-section-container').style.display = 'block';
+          
+          let nearbyHospitals = [];
+
+          try {
+            // Call OSM Overpass API to locate clinics/hospitals within 6km
+            const radius = 6000;
+            const query = `[out:json];(node["amenity"="hospital"](around:${radius},${lat},${lng});node["amenity"="clinic"](around:${radius},${lat},${lng}););out body;`;
+            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+            
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("OSM query failed");
+            
+            const data = await response.json();
+            
+            if (data.elements && data.elements.length > 0) {
+              nearbyHospitals = data.elements
+                .map(el => {
+                  const dist = calculateDistance(lat, lng, el.lat, el.lon);
+                  return {
+                    name: el.tags.name || "Medical Facility",
+                    address: el.tags["addr:street"] 
+                      ? `${el.tags["addr:street"]} ${el.tags["addr:housenumber"] || ""}` 
+                      : "Address details unavailable",
+                    lat: el.lat,
+                    lon: el.lon,
+                    distance: dist
+                  };
+                })
+                .sort((a, b) => a.distance - b.distance)
+                .slice(0, 5);
+            }
+          } catch (err) {
+            console.warn("OSM Overpass call failed. Loading simulator centers.");
+          }
+
+          if (nearbyHospitals.length === 0) {
+            // Mock default coordinates if offline or failed
+            nearbyHospitals = [
+              { name: "Emergency Care Hospital", address: "Central City Hospital Blvd", lat: lat + 0.005, lon: lng + 0.003, distance: 0.8 },
+              { name: "City Trauma Center", address: "77 Medical Way", lat: lat - 0.008, lon: lng - 0.004, distance: 1.4 }
+            ];
+          }
+
+          renderLeafletMap(lat, lng, nearbyHospitals);
+        },
+        (err) => {
+          locateLabel.innerText = "Permission Denied";
+          errDisplay.innerText = "Location access denied. Please enable location permissions in your browser settings.";
+          errDisplay.style.display = 'block';
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    }
+
+    // Render Leaflet OSM map
+    function renderLeafletMap(lat, lng, list) {
+      if (mapInstance) {
+        mapInstance.remove();
+      }
+
+      // Initialize map object
+      mapInstance = L.map('leaflet-map-element').setView([lat, lng], 14);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(mapInstance);
+
+      markersLayerGroup = L.layerGroup().addTo(mapInstance);
+
+      // Pins
+      const userIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+
+      const hospitalIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+
+      // Plot user location
+      L.marker([lat, lng], { icon: userIcon })
+        .bindPopup('<h4>Your Location</h4>')
+        .addTo(markersLayerGroup);
+
+      // Plot hospitals
+      list.forEach(h => {
+        L.marker([h.lat, h.lon], { icon: hospitalIcon })
+          .bindPopup(`
+            <div class="hospital-popup">
+              <h4>${h.name}</h4>
+              <p><strong>Distance:</strong> ${h.distance.toFixed(2)} km</p>
+              <p>${h.address}</p>
+              <a href="https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${h.lat},${h.lon}" target="_blank">Get Directions</a>
+            </div>
+          `)
+          .addTo(markersLayerGroup);
+      });
+    }
+
+    // Build LLM prompts
+    function buildAnalysisPrompt(reportText) {
+      return `You are an expert medical educator and simplifier. Analyze medical report text and output a JSON matching this exact structure:
+      {
+        "isEmergency": boolean,
+        "emergencyReason": "string describing emergency or null",
+        "simplifiedSummary": "patient-friendly translation",
+        "labValues": [{"name": "Name", "value": "Val", "referenceRange": "Range", "status": "Normal"|"Low"|"High", "explanation": "explain"}],
+        "glossary": [{"term": "Term", "definition": "lay term", "analogy": "easy analogy"}],
+        "doctorQuestions": ["q1", "q2"],
+        "lifestyleRecommendations": ["rec1"],
+        "references": [{"sourceName": "Mayo Clinic", "url": "link"}]
+      }
+      Raw medical text: ${reportText}`;
+    }
+  </script>
+</body>
+</html>
